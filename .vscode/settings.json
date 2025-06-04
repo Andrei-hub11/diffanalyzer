@@ -1,0 +1,37 @@
+{
+  "go.toolsManagement.checkForUpdates": "local",
+  "go.useLanguageServer": true,
+  "go.formatTool": "goimports",
+  "go.lintTool": "golint",
+  "go.vetOnSave": "package",
+  "go.formatOnSave": true,
+  "go.lintOnSave": "package",
+  "go.buildOnSave": "package",
+  "go.testOnSave": true,
+  "go.coverOnSave": false,
+  "go.coverageDecorator": {
+    "type": "gutter",
+    "coveredHighlightColor": "rgba(64,128,128,0.5)",
+    "uncoveredHighlightColor": "rgba(128,64,64,0.25)",
+    "coveredGutterStyle": "blockblue",
+    "uncoveredGutterStyle": "blockred"
+  },
+  "go.testFlags": ["-v"],
+  "go.buildFlags": [],
+  "go.testTimeout": "30s",
+  "go.delveConfig": {
+    "apiVersion": 2,
+    "showGlobalVariables": true
+  },
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.insertSpaces": false,
+    "editor.tabSize": 4
+  },
+  "go.trace.server": "verbose"
+}
+
