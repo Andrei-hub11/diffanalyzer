@@ -20,8 +20,6 @@ func formatValue(v reflect.Value) string {
 			field := typeOfT.Field(i)
 			fieldValue := v.Field(i)
 
-			fmt.Println("field", field.Name, "value", formatValue(fieldValue))
-
 			parts = append(parts, fmt.Sprintf("%s: %v", field.Name, formatValue(fieldValue)))
 		}
 
