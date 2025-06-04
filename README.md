@@ -7,56 +7,52 @@ Este projeto implementa um comparador de structs em Go que identifica diferença
 ```mermaid
 flowchart TD
     A[FindDifferences<br/>expected, actual] --> B[compare<br/>expected, actual, path=""]
-
     B --> C{Tipos iguais?}
     C -->|Não| D[Adicionar diff<br/>tipos diferentes]
     C -->|Sim| E{Qual Kind?}
-
     E -->|Struct| F[Iterar campos<br/>do struct]
     E -->|String| G[Comparar strings]
     E -->|Slice/Array| H[Iterar elementos<br/>do slice]
-
     F --> I[Para cada campo:<br/>buildPath + compare recursivo]
     I --> B
-
     G --> J{Strings iguais?}
     J -->|Não| K[Adicionar diff<br/>string diferente]
     J -->|Sim| L[Continuar]
-
     H --> M[Para cada índice:<br/>DeepEqual]
     M --> N{Elementos iguais?}
     N -->|Não| O[Adicionar diff<br/>elemento diferente]
     N -->|Sim| P[Próximo elemento]
-
     D --> Q[Return diffs]
     K --> Q
     L --> Q
     O --> Q
     P --> Q
-
     subgraph "Exemplo: Person"
         R[Person struct] --> S[ID: int]
         R --> T[Name: string]
         R --> U[Emails: slice string]
         R --> V[Profile: struct]
-
         V --> W[Bio: string]
         V --> X[Tags: slice string]
         V --> Y[Address: struct]
-
         Y --> Z[City: string]
         Y --> AA[Country: string]
     end
+    classDef structBox fill:#1a365d,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef stringBox fill:#553c9a,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef sliceBox fill:#1e4d72,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef diffBox fill:#c53030,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef processBox fill:#2d5a87,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef decisionBox fill:#4a5568,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    classDef actionBox fill:#38a169,stroke:#ffffff,stroke-width:2px,color:#ffffff
 
-    classDef structBox fill:#e1f5fe
-    classDef stringBox fill:#f3e5f5
-    classDef sliceBox fill:#e8f5e8
-    classDef diffBox fill:#ffebee
-
+    class A,B,I,Q processBox
+    class C,E,J,N decisionBox
+    class D,K,O diffBox
+    class F,G,H,L,M,P actionBox
     class R,V,Y structBox
     class S,T,W,Z,AA stringBox
     class U,X sliceBox
-    class D,K,O diffBox
 ```
 
 ## Tipos de Dados Suportados
