@@ -6,106 +6,107 @@ Este projeto implementa um comparador de structs em Go que identifica diferença
 
 ```mermaid
 flowchart TD
-    A[FindDifferences<br/>expected, actual] --> B[compare<br/>expected, actual, path=""]
+    A[FindDifferences] --> B[compare recursivo]
     B --> C{Tipos iguais?}
-    C -->|Não| D[Adicionar diff<br/>tipos diferentes]
-    C -->|Sim| E{Qual Kind?}
-    E -->|Struct| F[Iterar campos<br/>do struct]
-    E -->|String| G[Comparar strings]
-    E -->|Slice/Array| H[Iterar elementos<br/>do slice]
-    F --> I[Para cada campo:<br/>buildPath + compare recursivo]
-    I --> B
-    G --> J{Strings iguais?}
-    J -->|Não| K[Adicionar diff<br/>string diferente]
-    J -->|Sim| L[Continuar]
-    H --> M[Para cada índice:<br/>DeepEqual]
-    M --> N{Elementos iguais?}
-    N -->|Não| O[Adicionar diff<br/>elemento diferente]
-    N -->|Sim| P[Próximo elemento]
-    D --> Q[Return diffs]
-    K --> Q
-    L --> Q
-    O --> Q
-    P --> Q
-    subgraph "Exemplo: Person"
-        R[Person struct] --> S[ID: int]
-        R --> T[Name: string]
-        R --> U[Emails: slice string]
-        R --> V[Profile: struct]
-        V --> W[Bio: string]
-        V --> X[Tags: slice string]
-        V --> Y[Address: struct]
-        Y --> Z[City: string]
-        Y --> AA[Country: string]
-    end
-    classDef structBox fill:#1a365d,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef stringBox fill:#553c9a,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef sliceBox fill:#1e4d72,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef diffBox fill:#c53030,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef processBox fill:#2d5a87,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef decisionBox fill:#4a5568,stroke:#ffffff,stroke-width:2px,color:#ffffff
-    classDef actionBox fill:#38a169,stroke:#ffffff,stroke-width:2px,color:#ffffff
+    C -->|Não| D[Diff: tipos diferentes]
+    C -->|Sim| E{Qual tipo?}
 
-    class A,B,I,Q processBox
-    class C,E,J,N decisionBox
-    class D,K,O diffBox
-    class F,G,H,L,M,P actionBox
-    class R,V,Y structBox
-    class S,T,W,Z,AA stringBox
-    class U,X sliceBox
+    E -->|Primitivos| F[String, Int, Bool, Float]
+    E -->|Struct| G[Iterar campos]
+    E -->|Slice/Array| H[Verificar nil → tamanho → elementos]
+    E -->|Map| I[Verificar nil → tamanho → chaves]
+    E -->|Ptr| J[Verificar nil → elementos]
+
+    F --> K{Valores iguais?}
+    K -->|Não| L[Adicionar diff]
+    K -->|Sim| M[Continuar]
+
+    G --> N[buildPath + compare recursivo]
+    N --> B
+
+    H --> O["path.[index]"]
+    O --> B
+
+    I --> P["path.[key]"]
+    P --> B
+
+    J --> B
+
+    D --> Q[Retornar diferenças]
+    L --> Q
+    M --> Q
+
+    classDef processBox fill:#2d5a87,stroke:#fff,stroke-width:2px,color:#fff
+    classDef decisionBox fill:#4a5568,stroke:#fff,stroke-width:2px,color:#fff
+    classDef typeBox fill:#553c9a,stroke:#fff,stroke-width:2px,color:#fff
+    classDef diffBox fill:#c53030,stroke:#fff,stroke-width:2px,color:#fff
+    classDef pathBox fill:#38a169,stroke:#fff,stroke-width:2px,color:#fff
+
+    class A,B,N,Q processBox
+    class C,E,K decisionBox
+    class F,G,H,I,J typeBox
+    class D,L diffBox
+    class O,P,M pathBox
 ```
 
 ## Tipos de Dados Suportados
 
-- ✅ **Struct**: Comparação recursiva de campos
-- ✅ **String**: Comparação direta de valores
-- ✅ **Int**: Comparação de números inteiros
-- ✅ **Slice/Array**: Comparação elemento por elemento
-- ✅ **Bool**: Comparação de valores booleanos
-- ✅ **Float**: Comparação de números decimais
-- ✅ **Ptr**: Suporte a ponteiros
-- ✅ **Map**: Comparação de mapas
+### Tipos Primitivos
 
-## Exemplo de Uso
+- **String**: Comparação direta de valores
+- **Bool**: Comparação de valores booleanos
+- **Int/Int8/Int16/Int32/Int64**: Comparação de inteiros (preserva tipo original)
+- **Uint/Uint8/Uint16/Uint32/Uint64**: Comparação de inteiros sem sinal
+- **Float32/Float64**: Comparação de números decimais
+
+### Tipos Compostos
+
+- **Struct**: Comparação recursiva de campos
+- **Slice/Array**: Comparação elemento por elemento com detecção de tamanho
+- **Map**: Comparação chave-valor com suporte a chaves ausentes
+- **Ptr**: Suporte a ponteiros com detecção nil vs não-nil
+
+## Funcionalidades Avançadas
+
+### Paths Específicos
+
+- **Campos simples**: `Name`, `Age`
+- **Structs aninhados**: `Profile.Bio`, `Profile.Address.City`
+- **Elementos de slice**: `Emails.[0]`, `Tags.[1]`
+- **Valores de map**: `StringMap.[key1]`, `PersonMap.[employee1].Name`
+- **Maps aninhados**: `NestedMap.[group1].[item1]`
+
+### Detecção Inteligente
+
+- **Nil vs Empty**: Diferencia `nil` de slices/maps vazios
+- **Tipos preservados**: Mantém `int` vs `int32` vs `int64`
+- **Tamanhos diferentes**: Detecta slices/maps com tamanhos diferentes
+- **Chaves ausentes**: Identifica chaves faltando em maps
+
+## Exemplo de Uso Completo
 
 ```go
-expected := Person{
-    ID:     1,
-    Name:   "Alice",
-    Emails: []string{"alice@company.com", "alice@personal.com"},
-    Profile: Profile{
-        Bio:  "Engineer",
-        Tags: []string{"go", "backend", "api"},
-        Address: Address{
-            City:    "São Paulo",
-            Country: "Brasil",
-        },
-    },
+// Comparação de slice de structs
+expectedItems := []Item{
+    {ID: 1, Status: "active", Value: 100},
+    {ID: 3, Status: "active", Value: 150},
+    {ID: 5, Status: "active", Value: 300},
 }
 
-actual := Person{
-    ID:     1,
-    Name:   "Alice",
-    Emails: []string{"alice@company.com", "alice@gmail.com"},
-    Profile: Profile{
-        Bio:  "Developer",
-        Tags: []string{"go", "frontend", "api"},
-        Address: Address{
-            City:    "São Paulo",
-            Country: "Brazil",
-        },
-    },
+actualItems := []Item{
+    {ID: 1, Status: "active", Value: 100},
+    {ID: 3, Status: "active", Value: 140}, // Changed
+    {ID: 5, Status: "active", Value: 250}, // Changed
 }
 
-diffs := FindDifferences(expected, actual)
+diffs := FindDifferences(expectedItems, actualItems)
 ```
 
 ## Saída Esperada
 
 ```
-Field differences:
-  └─ Emails: "alice@personal.com" ≠ "alice@gmail.com"
-  └─ Profile.Bio: "Engineer" ≠ "Developer"
-  └─ Profile.Tags: "backend" ≠ "frontend"
-  └─ Profile.Address.Country: "Brasil" ≠ "Brazil"
+Direct Slice Comparison:
+  Found 2 difference(s):
+  └─ [1].Value: 150 ≠ 140
+  └─ [2].Value: 300 ≠ 250
 ```
