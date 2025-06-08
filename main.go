@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/seu-usuario/meu-projeto/models"
 )
@@ -209,7 +210,7 @@ func main() {
 	}
 
 	for i, pessoa := range pessoas {
-		fmt.Printf("Pessoa %d: %s\n", i+1, formatClean(pessoa))
+		fmt.Printf("Pessoa %d: %s\n", i+1, formatTestOutput(pessoa))
 	}
 
 	pessoaModificada := models.Pessoa{
@@ -259,6 +260,73 @@ func main() {
 
 	diffs10 := FindDifferences(expectedItems, actualItems)
 	printDifferences("Direct Slice Comparison", diffs10)
+
+	fmt.Println("\n=== EXAMPLE 11: Formatter Comparison ===")
+
+	// Dados esperados
+	expectedItems = []models.Item{
+		{ID: 1, Status: "active", Value: 100},
+		{ID: 3, Status: "active", Value: 150},
+		{ID: 5, Status: "active", Value: 300},
+	}
+
+	// Dados reais
+	actualItems = []models.Item{
+		{ID: 1, Status: "active", Value: 100},
+		{ID: 3, Status: "active", Value: 140}, // Value diferente
+		{ID: 5, Status: "active", Value: 250}, // Value diferente
+	}
+
+	fmt.Println("\n🚀 Exemplo como solicitado:")
+	fmt.Printf("expected: %s\n", formatComparisonValue(expectedItems))
+	fmt.Printf("actual  : %s\n", formatComparisonValue(actualItems))
+
+	// Encontra as diferenças
+	diffsItems := FindDifferences(expectedItems, actualItems)
+
+	if len(diffsItems) > 0 {
+		fmt.Println("Field differences:")
+		for _, diff := range diffsItems {
+			fmt.Printf("  └─ %s: %v ≠ %v\n", diff.Path, diff.Expected, diff.Actual)
+		}
+	} else {
+		fmt.Println("No differences found!")
+	}
+
+	fmt.Println("\n" + strings.Repeat("=", 60))
+
+	// Comparação usando formatTestOutput
+	fmt.Println("\n=== Comparação usando formatTestOutput ===")
+	fmt.Printf("expected: %s\n", formatTestOutput(expectedItems))
+	fmt.Printf("actual  : %s\n", formatTestOutput(actualItems))
+
+	fmt.Println("\n" + strings.Repeat("=", 60))
+
+	// Exemplo com maps usando formatters
+	fmt.Println("\n=== Map Comparison com Formatters ===")
+
+	expectedMap := map[string]models.Item{
+		"item1": {ID: 1, Status: "active", Value: 100},
+		"item2": {ID: 2, Status: "pending", Value: 200},
+	}
+
+	actualMap := map[string]models.Item{
+		"item1": {ID: 1, Status: "inactive", Value: 100}, // Status diferente
+		"item2": {ID: 2, Status: "pending", Value: 250},  // Value diferente
+	}
+
+	fmt.Printf("expected: %s\n", formatComparisonValue(expectedMap))
+	fmt.Printf("actual  : %s\n", formatComparisonValue(actualMap))
+
+	diffsMapItems := FindDifferences(expectedMap, actualMap)
+	if len(diffsMapItems) > 0 {
+		fmt.Println("Field differences:")
+		for _, diff := range diffsMapItems {
+			expectedStr := formatDiffValue(diff.Expected)
+			actualStr := formatDiffValue(diff.Actual)
+			fmt.Printf("  └─ %s: %s ≠ %s\n", diff.Path, expectedStr, actualStr)
+		}
+	}
 }
 
 func printDifferences(title string, diffs []models.FieldDiff) {
@@ -293,6 +361,7 @@ func formatDiffValue(value interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%v", v)
 	default:
-		return fmt.Sprintf("%v", v)
+		// Para tipos complexos, usa nosso formatter de comparação
+		return formatComparisonValue(v)
 	}
 }
